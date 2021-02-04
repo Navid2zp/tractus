@@ -1,6 +1,6 @@
+import json
 import socket
 import time
-import json
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
