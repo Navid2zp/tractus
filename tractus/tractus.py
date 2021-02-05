@@ -113,6 +113,8 @@ class Tracer:
         self.__metrics["data_length"] = len(self.__stream.read())
         self.__metrics["full_data"] = (time.time() - data_start) * 1000
 
+        self.__metrics["headers_length"] = len(self.__stream.info().as_bytes())
+
     def __get_metrics(self) -> dict:
         """
         Gather all the metrics.
@@ -121,7 +123,7 @@ class Tracer:
         self.__open_url()
 
         # If request failed
-        if self.__metrics["status_code"] == 0:
+        if self.__metrics["status_code"] == 0 or not self.__stream:
             return self.__metrics
         self.__measure_data()
 

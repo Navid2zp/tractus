@@ -45,6 +45,14 @@ class TestTracer(unittest.TestCase):
 
         self.assertTrue(type(getattr(self.result, 'ip')) == str)
 
+    def test_data_values(self):
+        self.assertEqual(getattr(self.result, 'status_code'), 200)
+        self.assertTrue(getattr(self.result, 'dns') > 0.0)
+        self.assertTrue(getattr(self.result, 'handshake') > 0.0)
+        self.assertTrue(getattr(self.result, 'full_data') > 0.0)
+        self.assertTrue(getattr(self.result, 'headers_length') > 0.0)
+        self.assertTrue(getattr(self.result, 'data_length') > 0.0)
+
 
 class TestTracerBadURL(unittest.TestCase):
 
