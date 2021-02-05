@@ -27,6 +27,14 @@ print(f'Headers length: {result.headers_length} bytes')
 
 ```
 
+#### Helpers:
+```python
+# Get result as json
+result.as_json()
+# Get result as dict
+result.as_dict()
+```
+
 License
 ----
 MIT
