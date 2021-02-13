@@ -1,5 +1,14 @@
 # tractus
 
+<p align="center">
+  <img alt="License" src="https://img.shields.io/github/license/navid2zp/tractus?style=flat-square" />
+  <img alt="Github Workflow" src="https://img.shields.io/github/workflow/status/navid2zp/tractus/tractus/main?style=flat-square" />
+  <img alt="Python verions" src="https://img.shields.io/pypi/pyversions/tractus?style=flat-square" />
+  <img alt="Format" src="https://img.shields.io/pypi/format/tractus?style=flat-square" />
+  <img alt="Implementation" src="https://img.shields.io/pypi/implementation/tractus?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/pypi/v/tractus?style=flat-square" />
+</p>
+
 Trace HTTP requests and gather performance metrics.
 
 ### Install
