@@ -47,9 +47,11 @@ class TestTracer(unittest.TestCase):
 
     def test_data_values(self):
         self.assertEqual(getattr(self.result, 'status_code'), 200)
-        self.assertTrue(getattr(self.result, 'dns') > 0)
+        # DNS might get cached
+        self.assertTrue(getattr(self.result, 'dns') >= 0)
         self.assertTrue(getattr(self.result, 'handshake') > 0)
-        self.assertTrue(getattr(self.result, 'full_data') > 0)
+        # Full data can be downloaded in less than a ms
+        self.assertTrue(getattr(self.result, 'full_data') >= 0)
         self.assertTrue(getattr(self.result, 'headers_length') > 0)
         self.assertTrue(getattr(self.result, 'data_length') > 0)
 

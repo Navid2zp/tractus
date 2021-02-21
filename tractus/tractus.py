@@ -74,7 +74,7 @@ class Tracer:
         try:
             dns_start = time.time()
             self.__metrics["ip"] = socket.gethostbyname(self.__hostname)
-            return int((time.time() - dns_start) * 1000)
+            return round((time.time() - dns_start) * 1000)
         except:
             return 0
 
@@ -103,18 +103,18 @@ class Tracer:
             return
         # urlopen time includes dns lookup too
         # so subtract dns time to get handshake time
-        self.__metrics["handshake"] = int(((time.time() - handshake_start) * 1000) - self.__metrics["dns"])
+        self.__metrics["handshake"] = round(((time.time() - handshake_start) * 1000) - self.__metrics["dns"])
 
     def __measure_data(self):
         # First byte
         first_b_s = time.time()
         self.__stream.read(1)
-        self.__metrics["first_byte"] = int((time.time() - first_b_s) * 1000)
+        self.__metrics["first_byte"] = round((time.time() - first_b_s) * 1000)
 
         # Full data
         data_start = time.time()
         self.__metrics["data_length"] = len(self.__stream.read())
-        self.__metrics["full_data"] = int((time.time() - data_start) * 1000)
+        self.__metrics["full_data"] = round((time.time() - data_start) * 1000)
 
         self.__metrics["headers_length"] = len(self.__stream.info().as_bytes())
 
