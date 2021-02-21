@@ -46,9 +46,9 @@ class Tracer:
     Gathers all the metrics and returns the results.
     """
 
-    def __init__(self, url: str, method: str = "GET", headers={}, data=None):
+    def __init__(self, url: str, method: str = "GET", headers=None, data=None):
         self.__url = url
-        self.__headers = headers
+        self.__headers = {} if not headers else headers
         self.__data = data
         self.__method = method
         # Extract hostname
