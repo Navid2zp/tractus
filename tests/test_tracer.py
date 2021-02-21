@@ -36,10 +36,10 @@ class TestTracer(unittest.TestCase):
 
     def test_data_types(self):
         self.assertIsInstance(getattr(self.result, 'status_code'), int)
-        self.assertIsInstance(getattr(self.result, 'dns'), float)
-        self.assertIsInstance(getattr(self.result, 'handshake'), float)
-        self.assertIsInstance(getattr(self.result, 'first_byte'), float)
-        self.assertIsInstance(getattr(self.result, 'full_data'), float)
+        self.assertIsInstance(getattr(self.result, 'dns'), int)
+        self.assertIsInstance(getattr(self.result, 'handshake'), int)
+        self.assertIsInstance(getattr(self.result, 'first_byte'), int)
+        self.assertIsInstance(getattr(self.result, 'full_data'), int)
         self.assertIsInstance(getattr(self.result, 'data_length'), int)
         self.assertIsInstance(getattr(self.result, 'headers_length'), int)
 
@@ -86,10 +86,10 @@ class TestTracerBadURL(unittest.TestCase):
 
     def test_data_types(self):
         self.assertIsInstance(getattr(self.result, 'status_code'), int)
-        self.assertIsInstance(getattr(self.result, 'dns'), float)
-        self.assertIsInstance(getattr(self.result, 'handshake'), float)
-        self.assertIsInstance(getattr(self.result, 'first_byte'), float)
-        self.assertIsInstance(getattr(self.result, 'full_data'), float)
+        self.assertIsInstance(getattr(self.result, 'dns'), int)
+        self.assertIsInstance(getattr(self.result, 'handshake'), int)
+        self.assertIsInstance(getattr(self.result, 'first_byte'), int)
+        self.assertIsInstance(getattr(self.result, 'full_data'), int)
         self.assertIsInstance(getattr(self.result, 'data_length'), int)
         self.assertIsInstance(getattr(self.result, 'headers_length'), int)
 
@@ -97,10 +97,10 @@ class TestTracerBadURL(unittest.TestCase):
 
     def test_data_values(self):
         self.assertEqual(getattr(self.result, 'status_code'), 0)
-        self.assertEqual(getattr(self.result, 'dns'), 0.0)
-        self.assertEqual(getattr(self.result, 'handshake'), 0.0)
-        self.assertEqual(getattr(self.result, 'first_byte'), 0.0)
-        self.assertEqual(getattr(self.result, 'full_data'), 0.0)
+        self.assertEqual(getattr(self.result, 'dns'), 0)
+        self.assertEqual(getattr(self.result, 'handshake'), 0)
+        self.assertEqual(getattr(self.result, 'first_byte'), 0)
+        self.assertEqual(getattr(self.result, 'full_data'), 0)
         self.assertEqual(getattr(self.result, 'data_length'), 0)
         self.assertEqual(getattr(self.result, 'headers_length'), 0)
         self.assertEqual(getattr(self.result, 'ip'), None)

@@ -10,14 +10,14 @@ from urllib.error import HTTPError
 class TraceResult:
     __slots__ = 'status_code', 'dns', 'handshake', "first_byte", 'full_data', 'data_length', 'headers_length', 'ip'
 
-    def __init__(self, status_code=0, dns=0.0, handshake=0.0, first_byte=0.0, full_data=0.0, data_length=0,
+    def __init__(self, status_code=0, dns=0, handshake=0, first_byte=0, full_data=0, data_length=0,
                  headers_length=0, ip=None):
-        self.dns: float = dns
-        self.handshake: float = handshake
-        self.first_byte: float = first_byte
-        self.full_data: float = full_data
-        self.data_length: float = data_length
-        self.headers_length: float = headers_length
+        self.dns: int = dns
+        self.handshake: int = handshake
+        self.first_byte: int = first_byte
+        self.full_data: int = full_data
+        self.data_length: int = data_length
+        self.headers_length: int = headers_length
         self.status_code: int = status_code
         self.ip: Union[str, None] = ip
 
@@ -46,17 +46,20 @@ class Tracer:
     Gathers all the metrics and returns the results.
     """
 
-    def __init__(self, url: str):
+    def __init__(self, url: str, method: str = "GET", headers={}, data=None):
         self.__url = url
+        self.__headers = headers
+        self.__data = data
+        self.__method = method
         # Extract hostname
         self.__hostname = urlparse(url).hostname
         self.__request: Request
         self.__stream = None
         self.__metrics: dict = {
-            "dns": 0.0,
-            "handshake": 0.0,
-            "first_byte": 0.0,
-            "full_data": 0.0,
+            "dns": 0,
+            "handshake": 0,
+            "first_byte": 0,
+            "full_data": 0,
             "data_length": 0,
             "headers_length": 0,
             "status_code": 0,
@@ -71,12 +74,12 @@ class Tracer:
         try:
             dns_start = time.time()
             self.__metrics["ip"] = socket.gethostbyname(self.__hostname)
-            return (time.time() - dns_start) * 1000
+            return int((time.time() - dns_start) * 1000)
         except:
-            return 0.0
+            return 0
 
     def __build_request(self):
-        self.__request = Request(self.__url)
+        self.__request = Request(self.__url, headers=self.__headers, method=self.__method)
 
     def __open_url(self):
         """
@@ -92,7 +95,7 @@ class Tracer:
 
         handshake_start = time.time()
         try:
-            self.__stream = urlopen(self.__request)
+            self.__stream = urlopen(self.__request, data=self.__data)
             self.__metrics["status_code"] = self.__stream.code
         except HTTPError as e:  # errors such as 404, 500 and etc.
             self.__metrics["status_code"] = e.code
@@ -100,18 +103,18 @@ class Tracer:
             return
         # urlopen time includes dns lookup too
         # so subtract dns time to get handshake time
-        self.__metrics["handshake"] = ((time.time() - handshake_start) * 1000) - self.__metrics["dns"]
+        self.__metrics["handshake"] = int(((time.time() - handshake_start) * 1000) - self.__metrics["dns"])
 
     def __measure_data(self):
         # First byte
         first_b_s = time.time()
         self.__stream.read(1)
-        self.__metrics["first_byte"] = (time.time() - first_b_s) * 1000
+        self.__metrics["first_byte"] = int((time.time() - first_b_s) * 1000)
 
         # Full data
         data_start = time.time()
         self.__metrics["data_length"] = len(self.__stream.read())
-        self.__metrics["full_data"] = (time.time() - data_start) * 1000
+        self.__metrics["full_data"] = int((time.time() - data_start) * 1000)
 
         self.__metrics["headers_length"] = len(self.__stream.info().as_bytes())
 
