@@ -15,11 +15,12 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install ubuntu packages
+      run: sudo apt install libcurl4-openssl-dev libssl-dev
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest
-        pip install pycurl
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
