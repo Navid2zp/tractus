@@ -49,7 +49,7 @@ class Tracer:
     def __init__(self, url: str, method: str = "GET", headers=None, data=None):
         self.__url = url
         self.__headers = {} if not headers else headers
-        self.__data = data
+        self.__data = data if (type(data) == bytes or data is None) else data.encode()
         self.__method = method
         # Extract hostname
         self.__hostname = urlparse(url).hostname
@@ -99,8 +99,6 @@ class Tracer:
             self.__metrics["status_code"] = self.__stream.code
         except HTTPError as e:  # errors such as 404, 500 and etc.
             self.__metrics["status_code"] = e.code
-        except Exception:
-            return
         # urlopen time includes dns lookup too
         # so subtract dns time to get handshake time
         self.__metrics["handshake"] = round(((time.time() - handshake_start) * 1000) - self.__metrics["dns"])
