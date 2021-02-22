@@ -1,5 +1,5 @@
 import pathlib
-import tractus
+import __version__
 from setuptools import setup, find_packages
 
 HERE = pathlib.Path(__file__).parent
@@ -7,7 +7,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="tractus",
-    version=tractus.__version__,
+    version=__version__.__version__,
     description="Trace a HTTP request and gather the performance metrics.",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -25,4 +25,5 @@ setup(
         "Operating System :: OS Independent"
     ],
     packages=find_packages(exclude=("tests",)),
+    install_requires=['pycurl'],
 )
