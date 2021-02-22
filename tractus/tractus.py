@@ -1,22 +1,37 @@
 import json
-import socket
-import time
 from typing import Union
-from urllib.parse import urlparse
-from urllib.request import Request, urlopen
-from urllib.error import HTTPError
+from urllib.request import Request
+
+import pycurl
+
+
+class Storage:
+    def __init__(self):
+        self.contents = b''
+
+    def store(self, buf: bytes):
+        self.contents += buf
+
+    def get_length(self):
+        return len(self.contents)
+
+    def __str__(self):
+        return str(self.contents)
 
 
 class TraceResult:
-    __slots__ = 'status_code', 'dns', 'handshake', "first_byte", 'full_data', 'data_length', 'headers_length', 'ip'
+    __slots__ = 'status_code', 'dns', 'handshake', 'connect', "first_byte", 'total', 'body_length', 'headers_length', \
+                'ip', 'redirects'
 
-    def __init__(self, status_code=0, dns=0, handshake=0, first_byte=0, full_data=0, data_length=0,
+    def __init__(self, status_code=0, dns=0, handshake=0, first_byte=0, total=0, body_length=0, redirects=0, connect=0,
                  headers_length=0, ip=None):
         self.dns: int = dns
+        self.redirects: int = redirects
         self.handshake: int = handshake
         self.first_byte: int = first_byte
-        self.full_data: int = full_data
-        self.data_length: int = data_length
+        self.total: int = total
+        self.connect: int = connect
+        self.body_length: int = body_length
         self.headers_length: int = headers_length
         self.status_code: int = status_code
         self.ip: Union[str, None] = ip
@@ -50,88 +65,70 @@ class Tracer:
         self.__url = url
         self.__headers = {} if not headers else headers
         self.__data = data if (type(data) == bytes or data is None) else data.encode()
-        self.__method = method
+        self.__method = method.upper()
         # Extract hostname
-        self.__hostname = urlparse(url).hostname
-        self.__request: Request
-        self.__stream = None
+        self.__curl: pycurl.Curl
+        self.__headers_storage: Storage = Storage()
+        self.__body_storage: Storage = Storage()
         self.__metrics: dict = {
             "dns": 0,
             "handshake": 0,
+            "redirects": 0,
+            "connect": 0,
             "first_byte": 0,
-            "full_data": 0,
-            "data_length": 0,
+            "total": 0,
+            "body_length": 0,
             "headers_length": 0,
             "status_code": 0,
             "ip": None
         }
 
-    def __get_dns_time(self):
-        """
-        Get IP address of the hostname.
-        :return: float: time took in ms
-        """
-        try:
-            dns_start = time.time()
-            self.__metrics["ip"] = socket.gethostbyname(self.__hostname)
-            return round((time.time() - dns_start) * 1000)
-        except:
-            return 0
+    def __set_headers(self):
+        if self.__headers and len(self.__headers) > 0:
+            headers = []
+            for key in self.__headers.keys():
+                headers.append(f'{key}: {self.__headers[key]}')
+            self.__curl.setopt(pycurl.HTTPHEADER, headers)
+
+    def __set_data(self):
+        if self.__data:
+            self.__curl.setopt(pycurl.POSTFIELDS, self.__data)
 
     def __build_request(self):
         self.__request = Request(self.__url, headers=self.__headers, method=self.__method)
+        self.__curl = pycurl.Curl()
+        self.__curl.setopt(pycurl.SSL_VERIFYPEER, 0)
+        self.__curl.setopt(pycurl.WRITEFUNCTION, lambda x: None)
+        self.__curl.setopt(pycurl.SSL_VERIFYHOST, 0)
+        self.__curl.setopt(pycurl.FOLLOWLOCATION, 1)
+        self.__curl.setopt(pycurl.DNS_CACHE_TIMEOUT, 0)
+        self.__curl.setopt(pycurl.URL, self.__url)
+        self.__curl.setopt(pycurl.CUSTOMREQUEST, self.__method)
+        self.__curl.setopt(self.__curl.HEADERFUNCTION, self.__headers_storage.store)
+        self.__curl.setopt(self.__curl.WRITEFUNCTION, self.__body_storage.store)
+        self.__set_headers()
+        self.__set_data()
 
-    def __open_url(self):
-        """
-        Open the url if dns was successful and measure handshake time and set the status code.
-        """
+    def __gather_info(self):
+        self.__metrics["dns"] = round(self.__curl.getinfo(pycurl.NAMELOOKUP_TIME) * 1000)
+        self.__metrics["redirects"] = round(self.__curl.getinfo(pycurl.REDIRECT_TIME) * 1000)
+        self.__metrics["handshake"] = round(self.__curl.getinfo(pycurl.APPCONNECT_TIME) * 1000)
+        self.__metrics["connect"] = round(self.__curl.getinfo(pycurl.CONNECT_TIME) * 1000)
+        self.__metrics["first_byte"] = round(self.__curl.getinfo(pycurl.STARTTRANSFER_TIME) * 1000)
+        self.__metrics["total"] = round(self.__curl.getinfo(pycurl.TOTAL_TIME) * 1000)
+        self.__metrics["status_code"] = self.__curl.getinfo(pycurl.HTTP_CODE)
+        self.__metrics["ip"] = self.__curl.getinfo(pycurl.PRIMARY_IP)
+        self.__metrics["headers_length"] = self.__headers_storage.get_length()
+        self.__metrics["body_length"] = self.__body_storage.get_length()
 
-        # Get the dns time first so we can subtract it from urlopen time to get handshake time
-        self.__metrics["dns"] = self.__get_dns_time()
-
-        # Return if ip is None which means we failed to resolve the host.
-        if not self.__metrics["ip"]:
-            return
-
-        handshake_start = time.time()
-        try:
-            self.__stream = urlopen(self.__request, data=self.__data)
-            self.__metrics["status_code"] = self.__stream.code
-        except HTTPError as e:  # errors such as 404, 500 and etc.
-            self.__metrics["status_code"] = e.code
-        # urlopen time includes dns lookup too
-        # so subtract dns time to get handshake time
-        self.__metrics["handshake"] = round(((time.time() - handshake_start) * 1000) - self.__metrics["dns"])
-
-    def __measure_data(self):
-        # First byte
-        first_b_s = time.time()
-        self.__stream.read(1)
-        self.__metrics["first_byte"] = round((time.time() - first_b_s) * 1000)
-
-        # Full data
-        data_start = time.time()
-        self.__metrics["data_length"] = len(self.__stream.read())
-        self.__metrics["full_data"] = round((time.time() - data_start) * 1000)
-
-        self.__metrics["headers_length"] = len(self.__stream.info().as_bytes())
-
-    def __get_metrics(self) -> dict:
-        """
-        Gather all the metrics.
-        :return: dict: metrics for handshake, first byte and etc.
-        """
-        self.__open_url()
-
-        # If request failed
-        if self.__metrics["status_code"] == 0 or not self.__stream:
-            return self.__metrics
-        self.__measure_data()
-
+    def __measure(self):
+        self.__curl.perform()
+        self.__gather_info()
+        self.__curl.close()
         return self.__metrics
 
     def trace(self) -> TraceResult:
         self.__build_request()
         return TraceResult(
-            **self.__get_metrics()
+            **self.__measure()
         )
