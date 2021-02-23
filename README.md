@@ -7,6 +7,7 @@
   <img alt="Format" src="https://img.shields.io/pypi/format/tractus?style=flat-square" />
   <img alt="Implementation" src="https://img.shields.io/pypi/implementation/tractus?style=flat-square" />
   <img alt="Version" src="https://img.shields.io/pypi/v/tractus?style=flat-square" />
+  <img alt="Quality" src="https://img.shields.io/lgtm/grade/python/github/Navid2zp/tractus?style=flat-square" />
 </p>
 
 Trace HTTP requests and gather performance metrics.
