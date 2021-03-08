@@ -1,4 +1,5 @@
 import json
+import time
 import unittest
 
 from tractus import Tracer, TraceResult
@@ -57,3 +58,27 @@ class TestTracer(unittest.TestCase):
         self.assertTrue(getattr(self.result, 'connect') >= 0)
         self.assertTrue(getattr(self.result, 'headers_length') > 0)
         self.assertTrue(getattr(self.result, 'body_length') > 0)
+
+
+class TestTracerTimeout(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """
+        Do a trace here to avoid duplicating request for each test case
+        """
+        start = time.time()
+        cls.timeout = False
+        try:
+            # It will raise a timeout error
+            # api set to delay the request for 3 secs
+            cls.result = Tracer('https://tractus.free.beeceptor.com/delay', timeout=1).trace()
+        except Exception as e:
+            # 28 == pycurl timeout error code
+            cls.timeout = e.args[0] == 28
+        cls.total = time.time() - start
+
+    def test_timeout(self):
+        self.assertTrue(self.timeout)
+        self.assertLess(self.total, 1.5)
+

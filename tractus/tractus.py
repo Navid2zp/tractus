@@ -61,11 +61,12 @@ class Tracer:
     Gathers all the metrics and returns the results.
     """
 
-    def __init__(self, url: str, method: str = "GET", headers=None, data=None):
+    def __init__(self, url: str, method: str = "GET", headers=None, data=None, timeout=300):
         self.__url = url
         self.__headers = {} if not headers else headers
         self.__data = data if (type(data) == bytes or data is None) else data.encode()
         self.__method = method.upper()
+        self.__timeout = timeout
         # Extract hostname
         self.__curl: pycurl.Curl
         self.__headers_storage: Storage = Storage()
@@ -101,6 +102,7 @@ class Tracer:
         self.__curl.setopt(pycurl.WRITEFUNCTION, lambda x: None)
         self.__curl.setopt(pycurl.SSL_VERIFYHOST, 0)
         self.__curl.setopt(pycurl.FOLLOWLOCATION, 1)
+        self.__curl.setopt(pycurl.TIMEOUT, self.__timeout)
         self.__curl.setopt(pycurl.DNS_CACHE_TIMEOUT, 0)
         self.__curl.setopt(pycurl.URL, self.__url)
         self.__curl.setopt(pycurl.CUSTOMREQUEST, self.__method)
